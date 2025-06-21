@@ -1,0 +1,70 @@
+{
+  "metadata": {
+    "name": "Test Environment Alpha",
+    "version": "0.1.0",
+    "author": "Solo7",
+    "created": "2025-06-21T12:00:00Z",
+    "tags": ["test", "prototype"]
+  },
+  "map": {
+    "width": 10,
+    "height": 10,
+    "tileSize": 1.0,
+    "tiles": [
+      { "x": 0, "y": 0, "type": "grass" },
+      { "x": 1, "y": 0, "type": "grass" },
+      { "x": 2, "y": 0, "type": "dirt" },
+      { "x": 3, "y": 0, "type": "stone", "height": 0.2 },
+      { "x": 4, "y": 0, "type": "water" }
+    ]
+  },
+  "objects": [
+    {
+      "id": "rock-001",
+      "model": "rock_large.glb",
+      "position": { "x": 3.5, "y": 0.5, "z": 0 },
+      "rotation": 0.25,
+      "tags": ["obstacle"],
+      "properties": {
+        "collision": true,
+        "hardness": 3
+      }
+    },
+    {
+      "id": "tree-001",
+      "model": "tree_oak.glb",
+      "position": { "x": 6, "y": 2 },
+      "rotation": 1.57,
+      "tags": ["scenery", "nature"],
+      "properties": {
+        "height": 4.5
+      }
+    }
+  ],
+  "agents": [
+    {
+      "id": "scout-01",
+      "model": "drone_scout.glb",
+      "behavior": "patrol_route_alpha",
+      "position": { "x": 1.0, "y": 1.0 },
+      "facing": 0,
+      "state": {
+        "patrolIndex": 0,
+        "alert": false
+      },
+      "tags": ["scout", "aerial"]
+    },
+    {
+      "id": "worker-01",
+      "model": "robot_worker.glb",
+      "behavior": "resource_gathering",
+      "position": { "x": 2.0, "y": 2.0 },
+      "facing": 3.14,
+      "state": {
+        "load": 0,
+        "target": null
+      },
+      "tags": ["worker", "ground"]
+    }
+  ]
+}

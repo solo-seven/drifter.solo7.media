@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://solo7.media/schemas/environment.schema.json",
+  "title": "EnvironmentDefinition",
+  "type": "object",
+  "required": ["map", "objects", "agents"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string", "default": "0.1.0" },
+        "author": { "type": "string" },
+        "created": { "type": "string", "format": "date-time" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "map": {
+      "type": "object",
+      "required": ["width", "height", "tiles"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "tileSize": { "type": "number", "minimum": 0.1, "default": 1.0 },
+        "tiles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["x", "y", "type"],
+            "properties": {
+              "x": { "type": "integer" },
+              "y": { "type": "integer" },
+              "type": { "type": "string" },
+              "height": { "type": "number" },
+              "tags": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "objects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "model", "position"],
+        "properties": {
+          "id": { "type": "string" },
+          "model": { "type": "string" },
+          "position": {
+            "type": "object",
+            "required": ["x", "y"],
+            "properties": {
+              "x": { "type": "number" },
+              "y": { "type": "number" },
+              "z": { "type": "number", "default": 0 }
+            }
+          },
+          "rotation": { "type": "number", "default": 0 },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      }
+    },
+    "agents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "model", "behavior", "position"],
+        "properties": {
+          "id": { "type": "string" },
+          "model": { "type": "string" },
+          "behavior": {
+            "type": "string",
+            "description": "Reference to a behavior script or preset"
+          },
+          "position": {
+            "type": "object",
+            "required": ["x", "y"],
+            "properties": {
+              "x": { "type": "number" },
+              "y": { "type": "number" },
+              "z": { "type": "number", "default": 0 }
+            }
+          },
+          "facing": {
+            "type": "number",
+            "description": "Direction agent is facing in radians"
+          },
+          "state": {
+            "type": "object",
+            "description": "Optional initial state data",
+            "additionalProperties": true
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}
