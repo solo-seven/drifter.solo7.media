@@ -9,9 +9,19 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
+        "github.com/gorilla/handlers"
+        "github.com/gorilla/mux"
 )
+
+func createHandler() http.Handler {
+        router := mux.NewRouter()
+        router.HandleFunc("/health", healthCheck).Methods("GET")
+
+        allowedOrigins := handlers.AllowedOrigins([]string{"http://localhost:3000"})
+        allowedMethods := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
+
+        return handlers.CORS(allowedOrigins, allowedMethods)(router)
+}
 
 func main() {
 	// Create a new router
