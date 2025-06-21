@@ -7,37 +7,89 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
-        "github.com/gorilla/handlers"
-        "github.com/gorilla/mux"
+	"github.com/gorilla/mux"
 )
 
+// corsMiddleware adds CORS headers to responses
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Set CORS headers
+		origin := r.Header.Get("Origin")
+		if origin != "" {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+			// Handle preflight requests
+			if r.Method == http.MethodOptions {
+				// Get the method the client wants to use
+				requestMethod := r.Header.Get("Access-Control-Request-Method")
+				if requestMethod != "" {
+					w.Header().Set("Access-Control-Allow-Methods", strings.ToUpper(requestMethod))
+				}
+
+				// Get the headers the client wants to use
+				requestHeaders := r.Header.Get("Access-Control-Request-Headers")
+				if requestHeaders != "" {
+					w.Header().Set("Access-Control-Allow-Headers", requestHeaders)
+				}
+
+				// Cache preflight response for 24 hours
+				w.Header().Set("Access-Control-Max-Age", "86400")
+
+
+				// End the request for preflight
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+		}
+
+		// Call the next handler
+		next.ServeHTTP(w, r)
+	})
+}
+
 func createHandler() http.Handler {
-        router := mux.NewRouter()
-        router.HandleFunc("/health", healthCheck).Methods("GET")
+	router := mux.NewRouter()
 
-        allowedOrigins := handlers.AllowedOrigins([]string{"http://localhost:3000"})
-        allowedMethods := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
+	// Register routes with explicit methods
+	healthHandler := http.HandlerFunc(healthCheck)
+	environmentHandler := http.HandlerFunc(saveEnvironment)
 
-        return handlers.CORS(allowedOrigins, allowedMethods)(router)
+	// Apply CORS middleware to each route
+	router.Handle("/health", healthHandler).Methods("GET")
+	router.Handle("/environments", environmentHandler).Methods("POST")
+
+	// Apply CORS middleware to the router
+	handler := corsMiddleware(router)
+
+	return handler
+}
+
+// setupServer creates and configures an HTTP server with the provided handler
+func setupServer(handler http.Handler, port string) *http.Server {
+	if port == "" {
+		port = "8080"
+	}
+
+	return &http.Server{
+		Addr:    ":" + port,
+		Handler: handler,
+	}
+}
+
+// runServer starts the HTTP server and listens for requests
+func runServer(server *http.Server) error {
+	log.Printf("Server starting on %s\n", server.Addr)
+	return server.ListenAndServe()
 }
 
 func main() {
-	// Create a new router
-	router := mux.NewRouter()
-
-	// Register endpoints
-	router.HandleFunc("/health", healthCheck).Methods("GET")
-	router.HandleFunc("/environments", saveEnvironment).Methods("POST")
-
-	// Set up CORS
-	callowedOrigins := handlers.AllowedOrigins([]string{"http://localhost:3000"})
-	allowedMethods := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
-
-	// Start the HTTP server with CORS middleware
-	log.Println("Drifter backend starting on :8080")
-	log.Fatal(http.ListenAndServe(":8080", handlers.CORS(callowedOrigins, allowedMethods)(router)))
+	port := os.Getenv("PORT")
+	server := setupServer(createHandler(), port)
+	log.Fatal(runServer(server))
 }
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {
@@ -48,24 +100,40 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 
 func saveEnvironment(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	
+	// Check Content-Type header
+	contentType := r.Header.Get("Content-Type")
+	if contentType != "" && contentType != "application/json" {
+		http.Error(w, `{"error":"Content-Type must be application/json"}`, http.StatusUnsupportedMediaType)
+		return
+	}
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "failed to read body", http.StatusBadRequest)
+		http.Error(w, `{"error":"failed to read request body"}`, http.StatusBadRequest)
 		return
 	}
 	if len(body) == 0 {
-		http.Error(w, "empty body", http.StatusBadRequest)
+		http.Error(w, `{"error":"empty request body"}`, http.StatusBadRequest)
+		return
+	}
+
+	// Validate JSON
+	var jsonData map[string]interface{}
+	if err := json.Unmarshal(body, &jsonData); err != nil {
+		http.Error(w, `{"error":"invalid JSON: `+err.Error()+`"}`, http.StatusBadRequest)
 		return
 	}
 
 	// Prepare log entry
-	record := map[string]json.RawMessage{}
-	ts := time.Now().UTC().Format(time.RFC3339)
-	record["timestamp"] = json.RawMessage([]byte("\"" + ts + "\""))
-	record["environment"] = body
+	record := map[string]interface{}{
+		"timestamp":   time.Now().UTC().Format(time.RFC3339),
+		"environment": jsonData,
+	}
+
 	line, err := json.Marshal(record)
 	if err != nil {
-		http.Error(w, "failed to marshal record", http.StatusInternalServerError)
+		http.Error(w, `{"error":"failed to marshal record"}`, http.StatusInternalServerError)
 		return
 	}
 
