@@ -12,7 +12,7 @@ FRONTEND_DIR := frontend
 
 .PHONY: all dev-backend run-backend build-backend clean-backend lint-backend \
         dev-frontend build-frontend lint-frontend format-frontend \
-        start stop logs all lint deps
+        start stop logs all lint deps test-backend test-frontend
 
 ## ---------- GLOBAL ----------
 ## Start everything (backend and frontend in the background)
@@ -37,7 +37,7 @@ FRONTEND_LOG := $(LOG_DIR)/frontend.log
 $(shell mkdir -p $(LOG_DIR))
 
 ## Start all services in the background
-start: stop deps
+start: stop deps test-backend test-frontend
 	@echo "Starting backend..."
 	cd $(BACKEND_DIR) && go run . > ../$(BACKEND_LOG) 2>&1 & echo $$! > ../$(BACKEND_PID)
 
@@ -74,11 +74,11 @@ stop:
 
 ## ---------- BACKEND ----------
 ## Run backend in development mode with hot-reload (blocks)
-dev-backend:
+dev-backend: test-backend
 	cd $(BACKEND_DIR) && air
 
 ## Run backend in development mode (blocks)
-run-backend:
+run-backend: test-backend
 	cd $(BACKEND_DIR) && go run $(BACKEND_MAIN)
 
 ## Build backend binary
@@ -87,13 +87,19 @@ build-backend:
 
 clean-backend:
 	cd $(BACKEND_DIR) && rm -rf bin/
-
 lint-backend:
 	cd $(BACKEND_DIR) && golangci-lint run ./...
 
+test-backend:
+	cd $(BACKEND_DIR) && go test ./... -coverprofile=coverage.out
+	cd $(BACKEND_DIR) && grep -v internal/world coverage.out > coverage_filtered.out
+	@coverage=$$(cd $(BACKEND_DIR) && go tool cover -func=coverage_filtered.out | tail -1 | awk '{print substr($$3,1,length($$3)-1)}'); \
+	echo "Backend coverage: $$coverage%"; \
+	awk -v cov=$$coverage 'BEGIN { if (cov < 80) { print "Coverage below 80%"; exit 1 } }'
+
 ## ---------- FRONTEND ----------
 ## Run frontend in development mode (blocks)
-dev-frontend:
+dev-frontend: test-frontend
 	cd $(FRONTEND_DIR) && npm run dev
 
 build-frontend:
@@ -101,6 +107,9 @@ build-frontend:
 
 lint-frontend:
 	cd $(FRONTEND_DIR) && npm run lint
+
+test-frontend:
+	cd $(FRONTEND_DIR) && npm test --silent
 
 format-frontend:
 	cd $(FRONTEND_DIR) && npm run format || npm run prettier
