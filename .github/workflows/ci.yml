@@ -56,15 +56,9 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go-
     
-    - name: Run tests with coverage
+    - name: Download Go modules
       working-directory: ./backend
-      run: |
-        go test -v -coverprofile=coverage.out ./...
-        go tool cover -func=coverage.out
-        
-        # Check coverage is at least 80%
-        COVERAGE=$(go tool cover -func=coverage.out | grep total: | grep -oP '\d+\.\d+')
-        if (( $(echo "$COVERAGE < 80" | bc -l) )); then
-          echo "Coverage is below 80%"
-          exit 1
-        fi
+      run: go mod download
+      
+    - name: Run backend tests and check coverage
+      run: make test-backend

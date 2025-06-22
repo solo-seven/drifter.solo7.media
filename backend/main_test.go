@@ -292,6 +292,10 @@ func TestSaveEnvironmentEmpty(t *testing.T) {
 }
 
 func TestSaveEnvironmentFileErrors(t *testing.T) {
+	if os.Getuid() == 0 {
+		t.Skip("Skipping read-only tests when running as root")
+	}
+
 	tests := []struct {
 		name       string
 		setup      func(t *testing.T) (string, func())
@@ -442,15 +446,47 @@ func TestSetupServer(t *testing.T) {
 	}
 }
 
+func TestSaveEnvironment_Validation(t *testing.T) {
+	t.Run("unsupported_content_type", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/environments", strings.NewReader(`{}`))
+		req.Header.Set("Content-Type", "text/plain")
+		rr := httptest.NewRecorder()
+		saveEnvironment(rr, req)
+
+		assert.Equal(t, http.StatusUnsupportedMediaType, rr.Code)
+		assert.Contains(t, rr.Body.String(), "Content-Type must be application/json")
+	})
+
+	t.Run("empty_request_body", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/environments", nil)
+		req.Header.Set("Content-Type", "application/json")
+		rr := httptest.NewRecorder()
+		saveEnvironment(rr, req)
+
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
+		assert.Contains(t, rr.Body.String(), "empty request body")
+	})
+
+	t.Run("invalid_json", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/environments", strings.NewReader(`{`))
+		req.Header.Set("Content-Type", "application/json")
+		rr := httptest.NewRecorder()
+		saveEnvironment(rr, req)
+
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
+		assert.Contains(t, rr.Body.String(), "invalid JSON")
+	})
+}
+
 func TestRunServer(t *testing.T) {
-	// Create a test server that we can control
+	// Find an available port by creating a listener and closing it immediately.
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err, "should be able to create a test listener")
-	defer listener.Close()
-
 	port := listener.Addr().(*net.TCPAddr).Port
+	listener.Close() // Release the port so the server can use it.
+
 	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", port),
+		Addr: fmt.Sprintf("127.0.0.1:%d", port),
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 		}),
@@ -462,20 +498,30 @@ func TestRunServer(t *testing.T) {
 		errCh <- runServer(server)
 	}()
 
-	// Give the server a moment to start
-	time.Sleep(100 * time.Millisecond)
+	// Retry connecting to the server to avoid race conditions in CI.
+	var resp *http.Response
+	retries := 10
+	for i := 0; i < retries; i++ {
+		resp, err = http.Get(fmt.Sprintf("http://127.0.0.1:%d", port))
+		if err == nil {
+			break // Success
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+	require.NoError(t, err, "should be able to make request to server after retries")
+	
+	if resp != nil {
+		defer resp.Body.Close()
+		assert.Equal(t, http.StatusOK, resp.StatusCode, "server should respond with 200 OK")
+	}
 
-	// Test that the server is running
-	resp, err := http.Get(fmt.Sprintf("http://localhost:%d", port))
-	require.NoError(t, err, "should be able to make request to server")
-	defer resp.Body.Close()
-	assert.Equal(t, http.StatusOK, resp.StatusCode, "server should respond with 200 OK")
-
-	// Shutdown the server
-	err = server.Shutdown(context.Background())
+	// Shutdown the server with a timeout.
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err = server.Shutdown(shutdownCtx)
 	require.NoError(t, err, "should be able to shutdown server")
 
-	// Verify the server shutdown
+	// Verify the server shutdown gracefully.
 	select {
 	case err := <-errCh:
 		assert.Equal(t, http.ErrServerClosed, err, "should return server closed error")
