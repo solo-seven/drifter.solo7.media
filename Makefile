@@ -43,6 +43,14 @@ docker-down:
 	docker-compose down
 
 ## ---------- GLOBAL ----------
+## Clean everything including Docker images
+clean: stop clean-backend docker-clean
+	@echo "Cleaning frontend node_modules..."
+	@rm -rf $(FRONTEND_DIR)/node_modules
+	@rm -rf $(FRONTEND_DIR)/.next
+	@rm -f $(BACKEND_LOG) $(FRONTEND_LOG)
+	@echo "✅ Cleaned up all project artifacts and Docker images"
+
 ## Start everything (backend and frontend in the background)
 all: deps start
 
@@ -57,6 +65,7 @@ help:
 	@echo "  docker-clean      - Remove all Docker images"
 	@echo "  docker-up         - Start all services using Docker Compose"
 	@echo "  docker-down       - Stop all services using Docker Compose"
+	@echo "  clean            - Clean everything including Docker images and build artifacts"
 	@echo "  all          - Build and run everything"
 	@echo "  deps         - Install dependencies"
 	@echo "  dev-backend  - Run backend in development mode"
