@@ -14,6 +14,34 @@ FRONTEND_DIR := frontend
         test-frontend dev-frontend build-frontend lint-frontend format-frontend \
         start stop logs all lint deps
 
+## ---------- DOCKER ----------
+## Build all Docker images
+docker-build: docker-build-frontend docker-build-backend
+
+## Build frontend Docker image
+docker-build-frontend:
+	@echo "Building frontend Docker image..."
+	docker build -t drifter-frontend:local -f $(FRONTEND_DIR)/Dockerfile $(FRONTEND_DIR)
+
+## Build backend Docker image
+docker-build-backend:
+	@echo "Building backend Docker image..."
+	docker build -t drifter-backend:local -f $(BACKEND_DIR)/Dockerfile $(BACKEND_DIR)
+
+## Remove all Docker images
+docker-clean:
+	@echo "Removing Docker images..."
+	-docker rmi drifter-frontend:local 2>/dev/null || true
+	-docker rmi drifter-backend:local 2>/dev/null || true
+
+## Run all services using Docker Compose
+docker-up:
+	docker-compose up --build
+
+## Stop all services using Docker Compose
+docker-down:
+	docker-compose down
+
 ## ---------- GLOBAL ----------
 ## Start everything (backend and frontend in the background)
 all: deps start
@@ -23,6 +51,12 @@ help:
 	@echo "Drifter Project"
 	@echo
 	@echo "Targets:"
+	@echo "  docker-build      - Build all Docker images (frontend and backend)"
+	@echo "  docker-build-frontend - Build frontend Docker image"
+	@echo "  docker-build-backend  - Build backend Docker image"
+	@echo "  docker-clean      - Remove all Docker images"
+	@echo "  docker-up         - Start all services using Docker Compose"
+	@echo "  docker-down       - Stop all services using Docker Compose"
 	@echo "  all          - Build and run everything"
 	@echo "  deps         - Install dependencies"
 	@echo "  dev-backend  - Run backend in development mode"

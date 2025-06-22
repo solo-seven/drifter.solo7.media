@@ -9,11 +9,9 @@ global.fetch = mockFetch;
 
 describe('Home page', () => {
   // Helper to wait for the next tick
-test('renders without crashing', () => {
-  render(<Home />);
-});
-
-const waitForNextTick = () => new Promise(resolve => setTimeout(resolve, 0));
+  test('renders without crashing', () => {
+    render(<Home />);
+  });
 
   beforeEach(() => {
     mockFetch.mockClear();

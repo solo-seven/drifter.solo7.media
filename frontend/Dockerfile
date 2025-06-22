@@ -21,7 +21,9 @@ RUN npm run build
 FROM nginx:stable-alpine
 
 # Copy built assets from build stage
-COPY --from=build /app/build /usr/share/nginx/html
+COPY --from=build /app/.next/standalone/ /usr/share/nginx/html/
+COPY --from=build /app/.next/static /usr/share/nginx/html/.next/static
+COPY --from=build /app/public /usr/share/nginx/html/
 
 # Copy nginx config
 COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
