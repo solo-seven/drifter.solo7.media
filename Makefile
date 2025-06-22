@@ -10,13 +10,33 @@ FRONTEND_PID := frontend.pid
 # Frontend (Next.js)
 FRONTEND_DIR := frontend
 
-.PHONY: all dev-backend run-backend build-backend clean-backend lint-backend \
-        dev-frontend build-frontend lint-frontend format-frontend \
-        start stop logs all lint deps test-backend test-frontend
+.PHONY: test-backend dev-backend run-backend build-backend clean-backend lint-backend \
+        test-frontend dev-frontend build-frontend lint-frontend format-frontend \
+        start stop logs all lint deps
 
 ## ---------- GLOBAL ----------
 ## Start everything (backend and frontend in the background)
 all: deps start
+
+## Show help
+help:
+	@echo "Drifter Project"
+	@echo
+	@echo "Targets:"
+	@echo "  all          - Build and run everything"
+	@echo "  deps         - Install dependencies"
+	@echo "  dev-backend  - Run backend in development mode"
+	@echo "  run-backend  - Run backend in production mode"
+	@echo "  build-backend - Build backend binary"
+	@echo "  clean-backend - Clean backend build artifacts"
+	@echo "  lint-backend  - Lint backend code"
+	@echo "  dev-frontend  - Run frontend in development mode"
+	@echo "  build-frontend - Build frontend"
+	@echo "  lint-frontend  - Lint frontend code"
+	@echo "  format-frontend - Format frontend code"
+	@echo "  start        - Start backend and frontend in the background"
+	@echo "  stop         - Stop all running services"
+	@echo "  logs         - View logs from running services"
 
 ## Install dependencies
 deps:
@@ -95,7 +115,7 @@ test-backend:
 	cd $(BACKEND_DIR) && grep -v internal/world coverage.out > coverage_filtered.out
 	@coverage=$$(cd $(BACKEND_DIR) && go tool cover -func=coverage_filtered.out | tail -1 | awk '{print substr($$3,1,length($$3)-1)}'); \
 	echo "Backend coverage: $$coverage%"; \
-	awk -v cov=$$coverage 'BEGIN { if (cov < 80) { print "Coverage below 80%"; exit 1 } }'
+	awk -v cov=$coverage 'BEGIN { if (cov < 80) { print "Coverage below 80%"; exit 1 } }'
 
 ## ---------- FRONTEND ----------
 ## Run frontend in development mode (blocks)
