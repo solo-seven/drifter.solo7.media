@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { useState } from 'react';
 import { MeshData } from '@/lib/types';
-import { PlanetGenerator } from '../planet-generator';
+import PlanetGenerator from '../planet-generator';
 
 const meta: Meta<typeof PlanetGenerator> = {
   title: 'Components/PlanetGenerator',
