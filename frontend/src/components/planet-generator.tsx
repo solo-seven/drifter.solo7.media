@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Globe, Play, RotateCcw, Save, Download } from 'lucide-react';
+import { Globe, Play, RotateCcw, Save, Download } from 'lucide-react';
 import type { MeshData } from '@/lib/types';
+import { CollapsibleSection } from './ui/collapsible-section';
+import SliderInput from './ui/slider-input';
+import SelectInput from './ui/select-input';
+import ToggleInput from './ui/toggle-input';
 
 // Type definitions
 interface PlanetParameters {
@@ -43,109 +47,7 @@ interface PlanetGeneratorProps {
   setIsLoading: (isLoading: boolean) => void;
 }
 
-// Collapsible Section Component
-const CollapsibleSection: React.FC<{
-  title: string;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-}> = ({ title, children, defaultOpen = true }) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
-  return (
-    <div className="border border-gray-200 rounded-lg mb-4 overflow-hidden">
-      <button
-        className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 flex items-center justify-between text-left transition-colors"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <span className="font-semibold text-gray-700">{title}</span>
-        {isOpen ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-      </button>
-      {isOpen && (
-        <div className="p-4 bg-white">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Parameter Input Components
-const SliderInput: React.FC<{
-  label: string;
-  value: number;
-  onChange: (value: number) => void;
-  min: number;
-  max: number;
-  step?: number;
-  unit?: string;
-}> = ({ label, value, onChange, min, max, step = 1, unit }) => {
-  return (
-    <div className="mb-4">
-      <label className="block text-sm font-medium text-gray-600 mb-1">{label}</label>
-      <div className="flex items-center">
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          onChange={(e) => onChange(parseFloat(e.target.value))}
-          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-        />
-        <span className="ml-4 text-sm text-gray-800 w-16 text-right">{value}{unit}</span>
-      </div>
-    </div>
-  );
-};
-
-const SelectInput: React.FC<{
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: { value: string; label: string }[];
-}> = ({ label, value, onChange, options }) => {
-  return (
-    <div className="mb-4">
-      <label className="block text-sm font-medium text-gray-600 mb-1">{label}</label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-};
-
-const ToggleInput: React.FC<{
-  label: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}> = ({ label, checked, onChange }) => {
-  return (
-    <div className="flex items-center justify-between mb-4">
-      <span className="text-sm font-medium text-gray-600">{label}</span>
-      <button
-        type="button"
-        className={`${
-          checked ? 'bg-indigo-600' : 'bg-gray-200'
-        } relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
-        onClick={() => onChange(!checked)}
-      >
-        <span
-          className={`${
-            checked ? 'translate-x-6' : 'translate-x-1'
-          } inline-block w-4 h-4 transform bg-white rounded-full transition-transform`}
-        />
-      </button>
-    </div>
-  );
-};
+// UI Components have been moved to their own files in the components/ui directory
 
 const PlanetGenerator: React.FC<PlanetGeneratorProps> = ({ onGenerate, setIsLoading }) => {
   const [parameters, setParameters] = useState<PlanetParameters>({
