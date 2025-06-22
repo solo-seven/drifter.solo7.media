@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://solo7.media/schemas/planet.schema.json",
+  "title": "Planet",
+  "type": "object",
+  "required": ["planetId", "mesh", "metadata"],
+  "properties": {
+    "planetId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "mesh": {
+      "$ref": "#/definitions/Mesh"
+    },
+    "metadata": {
+      "$ref": "#/definitions/MeshMetadata"
+    }
+  },
+  "definitions": {
+    "Mesh": {
+      "type": "object",
+      "required": ["vertices", "faces", "edges"],
+      "properties": {
+        "vertices": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/Vertex"}
+        },
+        "faces": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/Face"}
+        },
+        "edges": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/Edge"}
+        }
+      }
+    },
+    "Vertex": {
+      "type": "object",
+      "required": ["id", "x", "y", "z"],
+      "properties": {
+        "id": {"type": "integer"},
+        "x": {"type": "number"},
+        "y": {"type": "number"},
+        "z": {"type": "number"}
+      }
+    },
+    "Face": {
+      "type": "object",
+      "required": ["id", "vertices", "type"],
+      "properties": {
+        "id": {"type": "integer"},
+        "vertices": {
+          "type": "array",
+          "items": {"type": "integer"}
+        },
+        "type": {
+          "type": "string",
+          "enum": ["triangle", "pentagon"]
+        }
+      }
+    },
+    "Edge": {
+      "type": "object",
+      "required": ["id", "vertices"],
+      "properties": {
+        "id": {"type": "integer"},
+        "vertices": {
+          "type": "array",
+          "items": {"type": "integer"}
+        }
+      }
+    },
+    "MeshMetadata": {
+      "type": "object",
+      "required": ["vertexCount", "faceCount", "edgeCount", "genus"],
+      "properties": {
+        "vertexCount": {"type": "integer"},
+        "faceCount": {"type": "integer"},
+        "edgeCount": {"type": "integer"},
+        "genus": {"type": "integer"}
+      }
+    }
+  }
+}

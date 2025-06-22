@@ -187,7 +187,16 @@ SCHEMA_OUTPUT := $(BACKEND_DIR)/internal/world/schema_gen.go
 generate-go-schema:
 	go-jsonschema -p world -o $(SCHEMA_OUTPUT) $(SCHEMA_INPUT)
 
+# Planet Schema Generation
+PLANET_SCHEMA_INPUT := schemas/planet.schema.json
+PLANET_SCHEMA_OUTPUT := $(BACKEND_DIR)/internal/planet/schema_gen.go
+
+generate-go-planet-schema:
+	@mkdir -p $(BACKEND_DIR)/internal/planet
+	go-jsonschema -p planet -o $(PLANET_SCHEMA_OUTPUT) $(PLANET_SCHEMA_INPUT)
+
 # Full regen + build
 regen:
 	$(MAKE) generate-go-schema
+	$(MAKE) generate-go-planet-schema
 	$(MAKE) build-backend

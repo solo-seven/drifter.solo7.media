@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/solo-seven/drifter.solo7.media/internal/api"
 	"encoding/json"
 	"io"
 	"log"
@@ -61,6 +62,9 @@ func createHandler() http.Handler {
 	// Apply CORS middleware to each route
 	router.Handle("/health", healthHandler).Methods("GET")
 	router.Handle("/environments", environmentHandler).Methods("POST")
+
+	// Register planet generation routes
+	api.RegisterPlanetRoutes(router)
 
 	// Apply CORS middleware to the router
 	handler := corsMiddleware(router)

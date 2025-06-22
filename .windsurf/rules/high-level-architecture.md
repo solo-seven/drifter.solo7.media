@@ -1,4 +1,6 @@
-# drifter.solo7.media
+---
+trigger: always_on
+---
 
 # Drifter - Planet Generator Architecture Guide
 
@@ -153,8 +155,8 @@ The project uses JSON Schema for API contract definition:
 - Type safety across the stack
 
 ### 4. Testing Strategy
-- **Backend**: Minimum 80% test coverage (excluding `internal/world`)
-- **Frontend**: Jest tests with `npm test`
+- **Backend**: Minimum 80% test coverage
+- **Frontend**: Jest tests with `npm test` with minimum 80% test coverage
 - **Integration**: Test API contracts with JSON Schema validation
 - **E2E**: Full application testing (to be implemented)
 
@@ -172,25 +174,19 @@ make build-frontend # Build production frontend
 
 ### Quick Start (Local Development)
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd drifter
-   ```
-
-2. **Install dependencies**
+1. **Install dependencies**
    ```bash
    make deps  # Installs both Go modules and npm packages
    ```
 
-3. **Start everything**
+2. **Start everything**
    ```bash
    make all   # Installs deps and starts both services
    # OR
    make start # Start services in background
    ```
 
-4. **Access the application**
+3. **Access the application**
    - Frontend: `http://localhost:3000`
    - Backend API: `http://localhost:8080`
 
@@ -322,6 +318,3 @@ make logs  # View backend logs
 - Backend binary is built to `backend/bin/drifter`
 - PID files track running services for proper cleanup
 - Docker development isolates dependencies if local setup has issues
-
-## License
-This project is licensed under the [Apache License 2.0](LICENSE).
